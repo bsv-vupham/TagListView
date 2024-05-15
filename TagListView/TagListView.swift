@@ -296,6 +296,7 @@ open class TagListView: UIView {
                 if let height = tagView.titleLabel?.frame.height,
                    self.tagLineBreakMode == .byWordWrapping && tagView.frame.size.height < height {
                     tagView.frame.size.height = height + tagView.paddingY * 2
+                    tagViewHeight = tagView.frame.height
                 }
             }
             
