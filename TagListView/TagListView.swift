@@ -217,6 +217,8 @@ open class TagListView: UIView {
         }
     }
     
+    private(set) var totalHeight: CGFloat = 0
+    
     // MARK: - Interface Builder
     
     open override func prepareForInterfaceBuilder() {
@@ -233,6 +235,7 @@ open class TagListView: UIView {
     }
     
     private func rearrangeViews() {
+        totalHeight = 0
         let views = tagViews as [UIView] + tagBackgroundViews + rowViews
         views.forEach {
             $0.removeFromSuperview()
@@ -273,6 +276,7 @@ open class TagListView: UIView {
         for (index, tagView) in tagViews.enumerated() {
             tagView.frame.size = tagView.intrinsicContentSize
             tagViewHeight = tagView.frame.height
+            let previousRow = currentRow
             
             if currentRowTagCount == 0 || currentRowWidth + tagView.frame.width > frameWidth {
                 currentRow += 1
@@ -281,11 +285,18 @@ open class TagListView: UIView {
                 currentRowView = UIView()
                 currentRowView.transform = directionTransform
                 currentRowView.frame.origin.y = CGFloat(currentRow - 1) * (tagViewHeight + marginY)
+                if self.tagLineBreakMode == .byWordWrapping {
+                    currentRowView.frame.origin.y = totalHeight
+                }
                 
                 rowViews.append(currentRowView)
                 addSubview(currentRowView)
 
                 tagView.frame.size.width = min(tagView.frame.size.width, frameWidth)
+                if let height = tagView.titleLabel?.frame.height,
+                   self.tagLineBreakMode == .byWordWrapping && tagView.frame.size.height < height {
+                    tagView.frame.size.height = height + tagView.paddingY * 2
+                }
             }
             
             let tagBackgroundView = tagBackgroundViews[index]
@@ -318,6 +329,9 @@ open class TagListView: UIView {
             }
             currentRowView.frame.size.width = currentRowWidth
             currentRowView.frame.size.height = max(tagViewHeight, currentRowView.frame.height)
+            if previousRow != currentRow {
+                totalHeight += currentRowView.frame.size.height + marginY
+            }
         }
         rows = currentRow
         
@@ -328,6 +342,10 @@ open class TagListView: UIView {
     
     override open var intrinsicContentSize: CGSize {
         var height = CGFloat(rows) * (tagViewHeight + marginY)
+        if self.tagLineBreakMode == .byWordWrapping {
+            height = totalHeight + marginY
+        }
+        
         if rows > 0 {
             height -= marginY
         }
